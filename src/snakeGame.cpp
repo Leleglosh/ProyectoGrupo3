@@ -1,5 +1,71 @@
-#include <iostream>
+#include "LedControl.h" 
+struct Pin {
+  static const short joystickX = A2; 
+  static const short joystickY = A3;
+  static const short joystickVCC = 15;
+  static const short joystickGND = 14; 
+  static const short potentiometer = A5; 
+  static const short CLK = 10;
+  static const short CS  = 11; 
+  static const short DIN = 12; 
+};
+const short intensity = 15;
+const short messageSpeed = 5;
+const short initialSnakeLength = 3;
 
+void setup() {
+  Serial.begin(115200);  
+  initialize();         
+  calibrateJoystick(); 
+  showSnakeMessage(); 
+}
+void loop() {
+  generateFood();    
+  scanJoystick();    
+  calculateSnake(); 
+  handleGameStates();
+}
+LedControl matrix(Pin::DIN, Pin::CLK, Pin::CS, 1);
+
+struct Point {
+  int row = 0, col = 0;
+  Point(int row = 0, int col = 0): row(row), col(col) {}
+};
+struct Coordinate {
+  int x = 0, y = 0;
+  Coordinate(int x = 0, int y = 0): x(x), y(y) {}
+};
+bool win = false;
+bool gameOver = false;
+Point snake;
+Point food(-1, -1);
+Coordinate joystickHome(500, 500);
+
+int snakeLength = initialSnakeLength; 
+int snakeSpeed = 1; 
+int snakeDirection = 0; 
+
+const short up     = 1;
+const short right  = 2;
+const short down   = 3; 
+const short left   = 4; 
+
+const int joystickThreshold = 160;
+const float logarithmity = 0.4;
+
+int gameboard[8][8] = {};
+void generateFood() {
+  if (food.row == -1 || food.col == -1) {
+    if (snakeLength >= 64) {
+      win = true;
+      return;
+    }
+    do {
+      food.col = random(8);
+      food.row = random(8);
+    } while (gameboard[food.row][food.col] > 0);
+  }
+}
 void scanJoystick() {
   int previousDirection = snakeDirection; 
   long timestamp = millis();
