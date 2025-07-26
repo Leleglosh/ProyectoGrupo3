@@ -178,3 +178,73 @@ void dumpGameBoard() {
   }
   Serial.println(buff);
 }
+
+matrix.clearDisplay(0);
+  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
+}
+void showGameOverMessage() {
+  [&] {
+    for (int d = 0; d < sizeof(gameOverMessage[0]) - 7; d++) {
+      for (int col = 0; col < 8; col++) {
+        delay(messageSpeed);
+        for (int row = 0; row < 8; row++) {
+          matrix.setLed(0, row, col, pgm_read_byte(&(gameOverMessage[row][col + d])));
+        }
+      }
+      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
+        return;
+      }
+    }
+  }();
+  matrix.clearDisplay(0);
+  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
+}
+void showWinMessage(){
+}
+void showScoreMessage(int score) {
+  if (score < 0 || score > 99) return;
+  int second = score % 10;
+  int first = (score / 10) % 10;
+  [&] {
+    for (int d = 0; d < sizeof(scoreMessage[0]) + 2 * sizeof(digits[0][0]); d++) {
+      for (int col = 0; col < 8; col++) {
+        delay(messageSpeed);
+        for (int row = 0; row < 8; row++) {
+          if (d <= sizeof(scoreMessage[0]) - 8) {
+            matrix.setLed(0, row, col, pgm_read_byte(&(scoreMessage[row][col + d])));
+          }
+          int c = col + d - sizeof(scoreMessage[0]) + 6; 
+          if (score < 10) c += 8;
+          if (c >= 0 && c < 8) {
+            if (first > 0) matrix.setLed(0, row, col, pgm_read_byte(&(digits[first][row][c]))); 
+          } else {
+            c -= 8;
+            if (c >= 0 && c < 8) {
+              matrix.setLed(0, row, col, pgm_read_byte(&(digits[second][row][c]))); 
+            }
+          }
+        }
+      }
+      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
+        return;
+      }
+    }
+  }();
+  matrix.clearDisplay(0);
+}
+float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
