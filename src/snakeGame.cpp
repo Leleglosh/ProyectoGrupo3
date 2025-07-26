@@ -1,5 +1,82 @@
 #include <iostream>
 
+void scanJoystick() {
+  int previousDirection = snakeDirection; 
+  long timestamp = millis();
+  while (millis() < timestamp + snakeSpeed) {
+    float raw = mapf(analogRead(Pin::potentiometer), 0, 1023, 0, 1);
+    snakeSpeed = mapf(pow(raw, 3.5), 0, 1, 10, 1000); 
+    if (snakeSpeed == 0) snakeSpeed = 1; 
+    analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold ? snakeDirection = up    : 0;
+    analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold ? snakeDirection = down  : 0;
+    analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold ? snakeDirection = left  : 0;
+    analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold ? snakeDirection = right : 0;
+
+    snakeDirection + 2 == previousDirection && previousDirection != 0 ? snakeDirection = previousDirection : 0;
+    snakeDirection - 2 == previousDirection && previousDirection != 0 ? snakeDirection = previousDirection : 0;
+
+    matrix.setLed(0, food.row, food.col, millis() % 100 < 50 ? 1 : 0);
+  }
+}
+
+void calculateSnake() {
+  switch (snakeDirection) {
+    case up:
+      snake.row--;
+      fixEdge();
+      matrix.setLed(0, snake.row, snake.col, 1);
+      break;
+    case right:
+      snake.col++;
+      fixEdge();
+      matrix.setLed(0, snake.row, snake.col, 1);
+      break;
+    case down:
+      snake.row++;
+      fixEdge();
+      matrix.setLed(0, snake.row, snake.col, 1);
+      break;
+    case left:
+      snake.col--;
+      fixEdge();
+      matrix.setLed(0, snake.row, snake.col, 1);
+      break;
+    default: 
+      return;
+  }
+  if (gameboard[snake.row][snake.col] > 1 && snakeDirection != 0) {
+    gameOver = true;
+    return;
+  }
+  if (snake.row == food.row && snake.col == food.col) {
+    food.row = -1; 
+    food.col = -1;
+    snakeLength++;
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        if (gameboard[row][col] > 0 ) {
+          gameboard[row][col]++;
+        }
+      }
+    }
+  }
+
+  gameboard[snake.row][snake.col] = snakeLength + 1; 
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      if (gameboard[row][col] > 0 ) {
+        gameboard[row][col]--;
+      }
+      matrix.setLed(0, row, col, gameboard[row][col] == 0 ? 0 : 1);
+    }
+  }
+}
+void fixEdge() {
+  snake.col < 0 ? snake.col += 8 : 0;
+  snake.col > 7 ? snake.col -= 8 : 0;
+  snake.row < 0 ? snake.row += 8 : 0;
+  snake.row > 7 ? snake.row -= 8 : 0;
+}
 void handleGameStates() 
 {
   if (gameOver || win) {
