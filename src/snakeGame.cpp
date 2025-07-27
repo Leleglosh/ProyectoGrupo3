@@ -1,4 +1,5 @@
 #include "LedControl.h" 
+
 struct Pin {
   static const short joystickX = A2; 
   static const short joystickY = A3;
@@ -9,6 +10,7 @@ struct Pin {
   static const short CS  = 11; 
   static const short DIN = 12; 
 };
+
 const short intensity = 15;
 const short messageSpeed = 5;
 const short initialSnakeLength = 3;
@@ -19,22 +21,26 @@ void setup() {
   calibrateJoystick(); 
   showSnakeMessage(); 
 }
+
 void loop() {
   generateFood();    
   scanJoystick();    
   calculateSnake(); 
   handleGameStates();
 }
+
 LedControl matrix(Pin::DIN, Pin::CLK, Pin::CS, 1);
 
 struct Point {
   int row = 0, col = 0;
   Point(int row = 0, int col = 0): row(row), col(col) {}
 };
+
 struct Coordinate {
   int x = 0, y = 0;
   Coordinate(int x = 0, int y = 0): x(x), y(y) {}
 };
+
 bool win = false;
 bool gameOver = false;
 Point snake;
@@ -54,6 +60,7 @@ const int joystickThreshold = 160;
 const float logarithmity = 0.4;
 
 int gameboard[8][8] = {};
+
 void generateFood() {
   if (food.row == -1 || food.col == -1) {
     if (snakeLength >= 64) {
@@ -66,6 +73,7 @@ void generateFood() {
     } while (gameboard[food.row][food.col] > 0);
   }
 }
+
 void scanJoystick() {
   int previousDirection = snakeDirection; 
   long timestamp = millis();
@@ -137,12 +145,14 @@ void calculateSnake() {
     }
   }
 }
+
 void fixEdge() {
   snake.col < 0 ? snake.col += 8 : 0;
   snake.col > 7 ? snake.col -= 8 : 0;
   snake.row < 0 ? snake.row += 8 : 0;
   snake.row > 7 ? snake.row -= 8 : 0;
 }
+
 void handleGameStates() 
 {
   if (gameOver || win) {
@@ -245,76 +255,6 @@ void dumpGameBoard() {
   Serial.println(buff);
 }
 
-matrix.clearDisplay(0);
-  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
-          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
-          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
-          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
-}
-void showGameOverMessage() {
-  [&] {
-    for (int d = 0; d < sizeof(gameOverMessage[0]) - 7; d++) {
-      for (int col = 0; col < 8; col++) {
-        delay(messageSpeed);
-        for (int row = 0; row < 8; row++) {
-          matrix.setLed(0, row, col, pgm_read_byte(&(gameOverMessage[row][col + d])));
-        }
-      }
-      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
-              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
-              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
-              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
-        return;
-      }
-    }
-  }();
-  matrix.clearDisplay(0);
-  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
-          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
-          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
-          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
-}
-void showWinMessage(){
-}
-void showScoreMessage(int score) {
-  if (score < 0 || score > 99) return;
-  int second = score % 10;
-  int first = (score / 10) % 10;
-  [&] {
-    for (int d = 0; d < sizeof(scoreMessage[0]) + 2 * sizeof(digits[0][0]); d++) {
-      for (int col = 0; col < 8; col++) {
-        delay(messageSpeed);
-        for (int row = 0; row < 8; row++) {
-          if (d <= sizeof(scoreMessage[0]) - 8) {
-            matrix.setLed(0, row, col, pgm_read_byte(&(scoreMessage[row][col + d])));
-          }
-          int c = col + d - sizeof(scoreMessage[0]) + 6; 
-          if (score < 10) c += 8;
-          if (c >= 0 && c < 8) {
-            if (first > 0) matrix.setLed(0, row, col, pgm_read_byte(&(digits[first][row][c]))); 
-          } else {
-            c -= 8;
-            if (c >= 0 && c < 8) {
-              matrix.setLed(0, row, col, pgm_read_byte(&(digits[second][row][c]))); 
-            }
-          }
-        }
-      }
-      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
-              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
-              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
-              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
-        return;
-      }
-    }
-  }();
-  matrix.clearDisplay(0);
-}
-float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-
 const PROGMEM bool snakeMessage[8][56] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -325,6 +265,7 @@ const PROGMEM bool snakeMessage[8][56] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
+
 const PROGMEM bool gameOverMessage[8][90] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -335,6 +276,7 @@ const PROGMEM bool gameOverMessage[8][90] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
+
 const PROGMEM bool scoreMessage[8][58] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -345,6 +287,7 @@ const PROGMEM bool scoreMessage[8][58] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
+
 const PROGMEM bool digits[][8][8] = {
   {
     {0, 0, 0, 0, 0, 0, 0, 0},
@@ -477,3 +420,75 @@ void showSnakeMessage() {
     }
   }();
 
+  matrix.clearDisplay(0);
+  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
+}
+
+void showGameOverMessage() {
+  [&] {
+    for (int d = 0; d < sizeof(gameOverMessage[0]) - 7; d++) {
+      for (int col = 0; col < 8; col++) {
+        delay(messageSpeed);
+        for (int row = 0; row < 8; row++) {
+          matrix.setLed(0, row, col, pgm_read_byte(&(gameOverMessage[row][col + d])));
+        }
+      }
+      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
+        return;
+      }
+    }
+  }();
+  matrix.clearDisplay(0);
+  while (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+          || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+          || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+          || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {}
+}
+
+void showWinMessage(){
+}
+
+void showScoreMessage(int score) {
+  if (score < 0 || score > 99) return;
+  int second = score % 10;
+  int first = (score / 10) % 10;
+  [&] {
+    for (int d = 0; d < sizeof(scoreMessage[0]) + 2 * sizeof(digits[0][0]); d++) {
+      for (int col = 0; col < 8; col++) {
+        delay(messageSpeed);
+        for (int row = 0; row < 8; row++) {
+          if (d <= sizeof(scoreMessage[0]) - 8) {
+            matrix.setLed(0, row, col, pgm_read_byte(&(scoreMessage[row][col + d])));
+          }
+          int c = col + d - sizeof(scoreMessage[0]) + 6; 
+          if (score < 10) c += 8;
+          if (c >= 0 && c < 8) {
+            if (first > 0) matrix.setLed(0, row, col, pgm_read_byte(&(digits[first][row][c]))); 
+          } else {
+            c -= 8;
+            if (c >= 0 && c < 8) {
+              matrix.setLed(0, row, col, pgm_read_byte(&(digits[second][row][c]))); 
+            }
+          }
+        }
+      }
+      if (analogRead(Pin::joystickY) < joystickHome.y - joystickThreshold
+              || analogRead(Pin::joystickY) > joystickHome.y + joystickThreshold
+              || analogRead(Pin::joystickX) < joystickHome.x - joystickThreshold
+              || analogRead(Pin::joystickX) > joystickHome.x + joystickThreshold) {
+        return;
+      }
+    }
+  }();
+  matrix.clearDisplay(0);
+}
+
+float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
